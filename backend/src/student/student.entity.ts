@@ -15,6 +15,10 @@ export class Student {
   @Column()
   age: number;
 
+  @Column({ nullable: true })
+  photo: string;
+
+
   @OneToMany(() => Enrollment, (enrollment) => enrollment.student)
   enrollments: Enrollment[];
 }

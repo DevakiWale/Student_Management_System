@@ -15,11 +15,16 @@ export class StudentService {
   }
 
   findAll() {
-    return this.studentRepo.find();
+    return this.studentRepo.find({
+      relations: ['user', 'enrollments', 'enrollments.course'], // helpful for admin view
+    });
   }
 
   findOne(id: number) {
-    return this.studentRepo.findOneBy({ id });
+    return this.studentRepo.findOne({
+      where: { id },
+      relations: ['user', 'enrollments', 'enrollments.course'],
+    });
   }
 
   update(id: number, data: Partial<Student>) {
@@ -28,5 +33,13 @@ export class StudentService {
 
   delete(id: number) {
     return this.studentRepo.delete(id);
+  }
+
+  // ✅ NEW: used to get student data from the logged-in user's ID
+  async findByUserId(userId: number) {
+    return this.studentRepo.findOne({
+      where: { user: { id: userId } },
+      relations: ['user', 'enrollments', 'enrollments.course'],
+    });
   }
 }
