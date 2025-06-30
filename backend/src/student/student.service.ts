@@ -23,7 +23,7 @@ export class StudentService {
   findOne(id: number) {
     return this.studentRepo.findOne({
       where: { id },
-      relations: ['user', 'enrollments', 'enrollments.course'],
+      relations: [ 'enrollments', 'enrollments.course'],
     });
   }
 

@@ -19,7 +19,7 @@ export class StudentController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: number) {
     return this.studentService.findOne(+id);
   }
 
@@ -31,7 +31,7 @@ export class StudentController {
   @Get('me')
 @UseGuards(JwtAuthGuard)
 getMyProfile(@Request() req) {
-  return this.studentService.findByUserId(req.user.id);
+    return this.studentService.findByUserId(req.user.id);
 }
 
 
