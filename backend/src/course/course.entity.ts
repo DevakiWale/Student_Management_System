@@ -12,8 +12,8 @@ export class Course {
   @Column()
   description: string;
 
-  @Column()
-  duration: number;
+  // @Column()
+  // duration: number;
 
   @OneToMany(() => Enrollment, (enrollment) => enrollment.course)
   enrollments: Enrollment[];

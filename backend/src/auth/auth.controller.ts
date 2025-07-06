@@ -1,19 +1,35 @@
-import { Body, Controller, Post } from '@nestjs/common';
+// src/auth/auth.controller.ts
+import { Controller, Post, Body, Res, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  register(
+  async register(
     @Body() body: { name: string; email: string; password: string; role: 'admin' | 'student' },
   ) {
     return this.authService.register(body.name, body.email, body.password, body.role);
   }
 
   @Post('login')
-  login(@Body() body: { email: string; password: string }) {
-    return this.authService.login(body.email, body.password);
+  async login(@Body() body: any, @Res({ passthrough: true }) res: Response) {
+    const { email, password } = body;
+
+    const result = await this.authService.login(email, password);
+
+    if (!result) {
+      throw new BadRequestException('Invalid credentials');
+    }
+
+    res.cookie('token', result.access_token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false,
+    });
+
+    return { role: result.role };
   }
 }

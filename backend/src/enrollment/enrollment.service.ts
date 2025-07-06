@@ -28,24 +28,41 @@ export class EnrollmentService {
     const enrollment = this.enrollmentRepo.create({ student, course });
     const savedEnrollment = await this.enrollmentRepo.save(enrollment);
 
-    // ✅ Send email notification
+    // ✅ Send Email Notification
     try {
-      await this.sendEnrollmentEmail(student.email, student.name, course.title); // Use course.name instead of course.title
+      await this.sendEnrollmentEmail(student.email, student.name, course.title);
     } catch (error) {
-      console.error('❌ Failed to send email:', error);
+      console.error('❌ Failed to send enrollment email:', error);
     }
 
     return savedEnrollment;
   }
 
-  findAll() {
+  async findAll(): Promise<Enrollment[]> {
     return this.enrollmentRepo.find({
       relations: ['student', 'course'],
     });
   }
 
+  async findByStudent(studentId: number) {
+    return this.enrollmentRepo.find({
+      where: { student: { id: studentId } },
+      relations: ['student', 'course'],
+    });
+}
+
+
   // ✅ Email Notification
-  async sendEnrollmentEmail(toEmail: string, studentName: string, courseName: string) {
+  private async sendEnrollmentEmail(
+    toEmail: string,
+    studentName: string,
+    courseName: string,
+  ) {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.warn('⚠️ Email credentials missing in .env');
+      return;
+    }
+
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -59,9 +76,9 @@ export class EnrollmentService {
       to: toEmail,
       subject: '🎓 Course Enrollment Confirmation',
       html: `
-        <p>Dear <strong>${studentName}</strong>,</p>
-        <p>You have been successfully enrolled in the course: <strong>${courseName}</strong>.</p>
-        <p>Best wishes,<br/>Student Management Team</p>
+        <p>Hello <strong>${studentName}</strong>,</p>
+        <p>✅ You have been successfully enrolled in the course: <strong>${courseName}</strong>.</p>
+        <p>Thank you for using Student Management System!</p>
       `,
     });
   }

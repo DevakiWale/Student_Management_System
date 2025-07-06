@@ -1,53 +1,42 @@
-// src/app/profile/page.tsx
-import { cookies } from 'next/headers';
-import jwt from 'jsonwebtoken';
-import api from '@/lib/axios';
+// app/profile/page.tsx
+'use client'
 
-export default async function ProfilePage() {
-  try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('token')?.value;
+import { useEffect, useState } from 'react'
+import api from '@/lib/api'
+import { useRouter } from 'next/navigation'
 
-    if (!token) {
-      return <div className="text-red-600">No token found. Please login.</div>;
+export default function ProfilePage() {
+  const [student, setStudent] = useState<any>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await api.get('/students/me')
+        setStudent(res.data)
+      } catch (err) {
+        console.error('❌ Failed to fetch profile:', err)
+        router.push('/login') // 🔒 Redirect to login if unauthorized
+      }
     }
+    fetchProfile()
+  }, [])
 
-    // Decode the token and extract user ID
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id?: any };
+  if (!student) return <p className="p-8">Loading profile...</p>
 
-    // Ensure ID is numeric and valid
-    const userId = Number(decoded.id);
-    if (!userId || isNaN(userId)) {
-      return <div className="text-red-600">Invalid token: user ID is missing or malformed.</div>;
-    }
-
-    // Fetch student data from backend
-    const res = await api.get(`/students/${userId}`);
-    const student = res.data;
-
-    return (
-      <div className="p-6">
-        <h1 className="text-xl font-bold mb-4">Student Profile</h1>
-        <p className="mb-1"><strong>Name:</strong> {student.name}</p>
-        <p className="mb-1"><strong>Email:</strong> {student.email}</p>
-        <p className="mb-1"><strong>Age:</strong> {student.age}</p>
-        {student.photo ? (
-          <img
-            src={student.photo}
-            alt="student"
-            className="w-40 h-40 object-cover rounded border mt-4"
-          />
-        ) : (
-          <p className="italic text-gray-500 mt-4">No photo uploaded</p>
-        )}
+  return (
+    <div className="min-h-screen bg-cover bg-center p-8" style={{ backgroundImage: 'url(/bg.jpg)' }}>
+      <div className="bg-white p-8 rounded shadow-lg bg-opacity-90">
+        <h1 className="text-2xl font-bold mb-4">Welcome, {student.name}</h1>
+        <p><strong>Email:</strong> {student.email}</p>
+        <p><strong>Age:</strong> {student.age}</p>
+        <h2 className="mt-4 text-xl font-semibold">Enrolled Courses:</h2>
+        <ul className="list-disc list-inside">
+          {student.enrollments.map((enrollment: any) => (
+            <li key={enrollment.id}>{enrollment.course.title}</li>
+          ))}
+        </ul>
       </div>
-    );
-  } catch (error) {
-    console.error('Error loading profile:', error);
-    return (
-      <div className="text-red-600 p-4">
-        Error loading profile. Please check your session or try logging in again.
-      </div>
-    );
-  }
+    </div>
+  )
 }

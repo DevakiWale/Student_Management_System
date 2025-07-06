@@ -3,9 +3,8 @@ import {
   PrimaryGeneratedColumn,
   Column,
   OneToMany,
-  OneToOne,
   ManyToOne,
-  JoinColumn,
+  
 } from 'typeorm';
 import { Enrollment } from '../enrollment/enrollment.entity';
 import { User } from '../auth/user.entity';
@@ -15,13 +14,15 @@ export class Student {
   @PrimaryGeneratedColumn()
   id: number;
 
+ 
+
   @Column()
   name: string;
 
   @Column()
   email: string;
 
-  @Column()
+  @Column({ nullable: true })
   age: number;
 
   @Column({ nullable: true })
@@ -35,7 +36,7 @@ export class Student {
   // @JoinColumn()
   // user: User;
 
-  @ManyToOne(() => User, (user) => user.students)
+  @ManyToOne(() => User, (user) => user.students, { eager: true })
   user: User;
 
 }

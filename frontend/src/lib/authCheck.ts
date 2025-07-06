@@ -1,19 +1,16 @@
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 
-const SECRET = process.env.JWT_SECRET || 'DevakiSuperSecret123';
+export const getUserFromCookie = async () => {
+  const cookieStore = cookies(); // ✅ No need for 'await' in 15.3+
+  const token = cookieStore.get('token')?.value;
 
-export async function getUserFromCookie() {
+  if (!token) return null;
+
   try {
-    const cookieStore = cookies(); // ✅ no need to await this anymore
-    const token = cookieStore.get('token')?.value;
-
-    if (!token) return null;
-
-    const decoded = jwt.verify(token, SECRET) as { id: number; role: string };
+    const decoded = jwt.decode(token);
     return decoded;
   } catch (err) {
-    console.error('Invalid token:', err);
     return null;
   }
-}
+};

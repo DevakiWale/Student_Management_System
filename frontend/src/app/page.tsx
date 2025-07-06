@@ -4,27 +4,75 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import Navbar from '@/components/Navbar';
 import { GraduationCap, Book, Users } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
   const [studentsCount, setStudentsCount] = useState(0);
   const [coursesCount, setCoursesCount] = useState(0);
   const [enrollmentsCount, setEnrollmentsCount] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    const fetchCounts = async () => {
-      const [studentsRes, coursesRes, enrollmentsRes] = await Promise.all([
-        api.get('/students'),
-        api.get('/courses'),
-        api.get('/enrollments'),
-      ]);
-      setStudentsCount(studentsRes.data.length);
-      setCoursesCount(coursesRes.data.length);
-      setEnrollmentsCount(enrollmentsRes.data.length);
+    const checkAuth = async () => {
+      try {
+        const res = await api.get('/students/me', { withCredentials: true });
+        if (res.data) {
+          setIsAuthenticated(true);
+        }
+      } catch (err) {
+        setIsAuthenticated(false);
+      }
     };
 
-    fetchCounts();
+    checkAuth();
   }, []);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      const fetchCounts = async () => {
+        const [studentsRes, coursesRes, enrollmentsRes] = await Promise.all([
+          api.get('/students'),
+          api.get('/courses'),
+          api.get('/enrollments'),
+        ]);
+        setStudentsCount(studentsRes.data.length);
+        setCoursesCount(coursesRes.data.length);
+        setEnrollmentsCount(enrollmentsRes.data.length);
+      };
+
+      fetchCounts();
+    }
+  }, [isAuthenticated]);
+
+  if (isAuthenticated === null) {
+    return <div className="text-white text-center mt-20">Checking authentication...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-blue-300 text-center">
+        <h1 className="text-4xl font-bold mb-6">Welcome to Student Management System</h1>
+        <p className="mb-8 text-lg">Please login or register to continue.</p>
+        <div className="space-x-4">
+          <button
+            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            onClick={() => router.push('/login')}
+          >
+            Login
+          </button>
+          <button
+            className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+            onClick={() => router.push('/register')}
+          >
+            Register
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Authenticated UI
   return (
     <div className="min-h-screen px-6 pt-20 bg-black bg-opacity-60">
       <Navbar />

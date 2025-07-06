@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "types": ["node", "./src/types"] ,
+     "include": ["src/**/*", "src/types.d.ts"],
     "module": "commonjs",
     "declaration": true,
     "removeComments": true,

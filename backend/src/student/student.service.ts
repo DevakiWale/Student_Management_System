@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Student } from './student.entity';
@@ -10,36 +10,43 @@ export class StudentService {
     private studentRepo: Repository<Student>,
   ) {}
 
-  create(student: Partial<Student>) {
+  async create(student: Partial<Student>) {
+    const newStudent = this.studentRepo.create(student);
+    return this.studentRepo.save(newStudent);
+  }
+
+  async findAll() {
+    return this.studentRepo.find({
+      relations: ['user', 'enrollments', 'enrollments.course'],
+    });
+  }
+
+  async findOne(id: number) {
+    const student = await this.studentRepo.findOne({
+      where: { id },
+      relations: ['enrollments', 'enrollments.course'],
+    });
+    if (!student) {
+      throw new NotFoundException(`Student with ID ${id} not found`);
+    }
+    return student;
+  }
+
+  async update(id: number, data: Partial<Student>) {
+    const student = await this.findOne(id); // ensure student exists
+    Object.assign(student, data);
     return this.studentRepo.save(student);
   }
 
-  findAll() {
-    return this.studentRepo.find({
-      relations: ['user', 'enrollments', 'enrollments.course'], // helpful for admin view
-    });
+  async delete(id: number) {
+    const student = await this.findOne(id); // ensure student exists
+    return this.studentRepo.remove(student);
   }
 
-  findOne(id: number) {
-    return this.studentRepo.findOne({
-      where: { id },
-      relations: [ 'enrollments', 'enrollments.course'],
-    });
-  }
-
-  update(id: number, data: Partial<Student>) {
-    return this.studentRepo.update(id, data);
-  }
-
-  delete(id: number) {
-    return this.studentRepo.delete(id);
-  }
-
-  // ✅ NEW: used to get student data from the logged-in user's ID
-  async findByUserId(userId: number) {
+  async findByUserId(userId: number): Promise<Student | null> {
     return this.studentRepo.findOne({
       where: { user: { id: userId } },
-      relations: ['user', 'enrollments', 'enrollments.course'],
+      relations: ['enrollments', 'enrollments.course'],
     });
   }
 }
